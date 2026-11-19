@@ -263,10 +263,10 @@ describe('sendExperimentExposureTelemetry', () => {
 		return Object.fromEntries(Object.entries(exposureMetadata(exposure)).map(([k, v]) => [k, new TelemetryTrustedValue(v)]));
 	}
 
-	it('sends exp_exposure to GitHub and Microsoft telemetry with the metadata as trusted properties', () => {
+	it('sends exp_exposure to Microsoft telemetry only with the metadata as trusted properties', () => {
 		const exposure: IExperimentExposure = { ...CONTEXT, flag: 'copilotchat.a', value: 'treatment', surface: 'vscode' };
 
-		expect(send(exposure)).toEqual([{ eventName: EXP_EXPOSURE_EVENT, destination: { github: true, microsoft: true }, properties: trusted(exposure), measurements: undefined }]);
+		expect(send(exposure)).toEqual([{ eventName: EXP_EXPOSURE_EVENT, destination: { github: false, microsoft: true }, properties: trusted(exposure), measurements: undefined }]);
 	});
 
 	it('sends a signed-out exposure to Microsoft telemetry only, without a cached tracking ID', () => {

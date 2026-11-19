@@ -675,8 +675,8 @@ export class SimpleExperimentationService extends Disposable implements IExperim
 				() => {
 					// Resolved lazily: the authentication service may depend on this service.
 					const trackingId = instantiationService?.invokeFunction(accessor => accessor.get(IAuthenticationService).copilotToken?.getTokenValue('tid'));
-					// Exposures go to GitHub telemetry only, so they need the tracking ID; reads
-					// before the token arrives (or while signed out) are exposed once it does.
+					// chat-lib forwards telemetry to the host; without a known matching device ID, wait
+					// for the tracking ID. The language server's Microsoft copy is allowlist-filtered.
 					return trackingId ? {
 						// Hosts pass treatment variables without the assignment's data version.
 						dataVersion: '',
