@@ -466,7 +466,7 @@ describe('MicrosoftExperimentationService endpoint routing', () => {
 			units: (properties?.assignment_units as TelemetryTrustedValue<string>).value,
 			tid: properties?.['common.tid'],
 		}))).toEqual([
-			{ eventName: 'exp_exposure', destination: { github: true, microsoft: true }, units: '{"copilot_tracking_id":"user","device_id":"test-device"}', tid: undefined },
+			{ eventName: 'exp_exposure', destination: { github: false, microsoft: true }, units: '{"copilot_tracking_id":"user","device_id":"test-device"}', tid: undefined },
 			{ eventName: 'exp_exposure', destination: { github: false, microsoft: true }, units: '{"device_id":"test-device"}', tid: '' },
 		]);
 	});

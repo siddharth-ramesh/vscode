@@ -9,7 +9,10 @@ import { ITelemetryService, TelemetryEventProperties, TelemetryTrustedValue } fr
  * `exp_exposure` is sent the first time a session reads an assigned treatment variable, and
  * again when a later read sees a different value. Triggered experiment scorecards use it as the
  * exposure event. Its metadata matches the GitHub monolith's and the `githubexp` Go SDK's
- * `exp_exposure`, so one trigger condition works across surfaces.
+ * `exp_exposure`, so one trigger condition works across surfaces. VS Code sends the event to
+ * Microsoft telemetry only. chat-lib forwards it to the host; the Copilot Language Server's
+ * Microsoft copy filters properties through an allowlist, so the metadata is available there
+ * only after the exposure keys are added.
  *
  * A triggered scorecard is only valid when its trigger fires in every arm under the same
  * conditions. Exposures don't guarantee that on their own:
@@ -228,9 +231,8 @@ export function exposureTelemetryProperties(exposure: IExperimentExposure): Tele
 }
 
 /**
- * Sends `exposure` to Microsoft telemetry, and to GitHub telemetry when it has a tracking ID.
- * Both carry the shared `abexp.assignmentcontext` property. Without a tracking ID (signed out),
- * the Microsoft event also omits the senders' cached `common.tid`.
+ * Sends `exposure` to Microsoft telemetry only, with the shared `abexp.assignmentcontext`
+ * property. Without a tracking ID (signed out), it blanks the sender's cached `common.tid`.
  */
 export function sendExperimentExposureTelemetry(telemetryService: Pick<ITelemetryService, 'sendTelemetryEvent'>, exposure: IExperimentExposure): void {
 	/* __GDPR__
@@ -251,15 +253,16 @@ export function sendExperimentExposureTelemetry(telemetryService: Pick<ITelemetr
 	*/
 	const properties = exposureTelemetryProperties(exposure);
 	if (exposure.trackingId) {
-		telemetryService.sendTelemetryEvent(EXP_EXPOSURE_EVENT, { github: true, microsoft: true }, properties);
+		telemetryService.sendTelemetryEvent(EXP_EXPOSURE_EVENT, { github: false, microsoft: true }, properties);
 	} else {
 		telemetryService.sendTelemetryEvent(EXP_EXPOSURE_EVENT, { github: false, microsoft: true }, { ...properties, 'common.tid': '' });
 	}
 }
 
 /**
- * Sends `exposure` through the host's GitHub telemetry sender. chat-lib hosts (the Copilot
- * language server) only forward GitHub telemetry.
+ * Passes `exposure` through chat-lib's host-provided telemetry sender. The Copilot Language
+ * Server also emits a Microsoft copy, but filters properties through an allowlist; exposure
+ * metadata reaches Microsoft telemetry only after the exposure keys are added.
  */
 export function sendExperimentExposureGHTelemetry(telemetryService: Pick<ITelemetryService, 'sendGHTelemetryEvent'>, exposure: IExperimentExposure): void {
 	telemetryService.sendGHTelemetryEvent(EXP_EXPOSURE_EVENT, exposureTelemetryProperties(exposure));
